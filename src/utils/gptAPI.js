@@ -1,17 +1,16 @@
-import OpenAI from 'openai';
-import fs from 'fs';
-
+import OpenAI from "openai";
+import fs from "fs";
 
 export const generateFragment = async (prompt) => {
   try {
     const openAIClient = new OpenAI(process.env.OPENAI_API_KEY);
     const completion = await openAIClient.chat.completions.create({
       model: "gpt-4o-mini",
-      "max_tokens": 1000,
+      max_tokens: 1000,
       messages: [
-        { role: 'system', content: 'You are a helpful assistant.' },
-        { role: 'user', content: prompt },
-      ]
+        { role: "system", content: "You are a helpful assistant." },
+        { role: "user", content: prompt },
+      ],
     });
 
     // Extraer la información de usage para verifiarlo
@@ -21,16 +20,16 @@ export const generateFragment = async (prompt) => {
     const logData = `Prompt tokens: ${usage.prompt_tokens}, Completion tokens: ${usage.completion_tokens}, Total tokens: ${usage.total_tokens}\n`;
 
     // Guardar el log en un archivo de texto
-    fs.appendFileSync('./src/logs/usage_logs.txt', logData, (err) => {
+    fs.appendFileSync("./src/logs/usage_logs.txt", logData, (err) => {
       if (err) {
-        console.error('Error writing to log file:', err);
+        console.error("Error writing to log file:", err);
       }
     });
 
     // Retornar los fragmentos generados
     return completion.choices[0].message.content;
   } catch (error) {
-    console.error('Error generating fragment:', error);
+    console.error("Error generating fragment:", error);
     throw error;
   }
 };
@@ -47,11 +46,11 @@ export const identifyType = async (fragmentText) => {
     const openAIClient = new OpenAI(process.env.OPENAI_API_KEY);
     const completion = await openAIClient.chat.completions.create({
       model: "gpt-4o-mini",
-      "max_tokens": 1000,
+      max_tokens: 1000,
       messages: [
-        { role: 'system', content: 'You are a helpful assistant.' },
-        { role: 'user', content: prompt },
-      ]
+        { role: "system", content: "You are a helpful assistant." },
+        { role: "user", content: prompt },
+      ],
     });
 
     let type = completion.choices[0].message.content;
@@ -60,19 +59,17 @@ export const identifyType = async (fragmentText) => {
     type = type.toLowerCase();
 
     // El response es únicamente "API" o "Usabilidad"
-    if (type.includes('usabilidad')) {
+    if (type.includes("usabilidad")) {
       return "Usabilidad";
-    } else if (type.includes('api')) {
-      return "API"
-    }
-    else {
+    } else if (type.includes("api")) {
+      return "API";
+    } else {
       // Si no se identifica el tipo, lanzar un error
-      console.log('Tipo no identificado:', type);
-      throw new Error('Tipo no identificado');
+      console.log("Tipo no identificado:", type);
+      throw new Error("Tipo no identificado");
     }
-
   } catch (error) {
-    console.error('Error consulting type:', error);
+    console.error("Error consulting type:", error);
     throw error;
   }
 };

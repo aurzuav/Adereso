@@ -1,6 +1,6 @@
-import { generateFragment } from './gptAPI.js';
-import { identifyType } from './gptAPI.js';
-import { extractContent } from './extractResponseContent.js';
+import { generateFragment } from "./gptAPI.js";
+import { identifyType } from "./gptAPI.js";
+import { extractContent } from "./extractResponseContent.js";
 
 export const processSegment = async (segment) => {
   // Definir los prompts para cada tipo de documento
@@ -69,19 +69,23 @@ export const processSegment = async (segment) => {
   try {
     // identificar el tipo de segmento para elegir el prompt correcto
     const type = await identifyType(segment.text);
-    if (type === 'Usabilidad') {
-      var prompt = promptUsabilidad;
-    } else if (type === 'API') {
-      var prompt = promptAPI;
+
+    let prompt;
+
+    if (type === "Usabilidad") {
+      prompt = promptUsabilidad;
+    } else if (type === "API") {
+      prompt = promptAPI;
     } else {
-      throw new Error('No se pudo identificar el tipo de segmento');
+      throw new Error("No se pudo identificar el tipo de segmento");
     }
-    
+
     // Generar el fragmento con el prompt correspondiente
     const fragment = await generateFragment(prompt);
 
     // Extraer los campos del fragmento
-    const { title, summary, tags, reference, content } = extractContent(fragment);
+    const { title, summary, tags, reference, content } =
+      extractContent(fragment);
 
     return {
       title,
@@ -92,7 +96,7 @@ export const processSegment = async (segment) => {
       content,
     };
   } catch (error) {
-    console.error('Error processing segment:', error);
+    console.error("Error processing segment:", error);
     throw error;
   }
 };
