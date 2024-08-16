@@ -10,7 +10,7 @@ import { checkIfRelated } from "./utils/checkIfRelated.js";
 dotenv.config();
 
 // Ruta a archivo JSONL de input
-const filePath = new URL("../src/data/adereso_cda.jsonl", import.meta.url)
+const filePath = new URL("../src/data/segments.jsonl", import.meta.url)
   .pathname;
 
 // Delete the file if it already exists
@@ -96,12 +96,10 @@ app.get("/process", async (req, res, next) => {
           outputPath,
           segments.map((item) => JSON.stringify(item)).join("\n"),
         );
-        res
-          .status(200)
-          .send({
-            message:
-              "Processing complete, check ./src/data/processed_fragments.jsonl",
-          });
+        res.status(200).send({
+          message:
+            "Processing complete, check ./src/data/processed_fragments.jsonl",
+        });
       } catch (error) {
         next(error); // Maneja errores en la finalización del procesamiento
       }
