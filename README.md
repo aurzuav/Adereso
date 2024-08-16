@@ -2,6 +2,8 @@
 
 Este proyecto es un desafío técnico para la posición de desarrollador Fullstack en Adereso. El objetivo es procesar un archivo JSONL que contiene segmentos de texto, fragmentarlos utilizando la API de GPT y generar un nuevo archivo JSONL con los fragmentos procesados, relacionándolos según sus etiquetas (tags).
 
+Video explicativo: https://vimeo.com/999702165/63768d77bd?share=copy
+
 ## Instalación
 
 Primero se deben instalar las dependencias con yarn
