@@ -54,7 +54,6 @@ export const identifyType = async (fragmentText) => {
     });
 
     let type = completion.choices[0].message.content;
-
     // Lower case type
     type = type.toLowerCase();
 

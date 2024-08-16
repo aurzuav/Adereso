@@ -86,12 +86,11 @@ export const processSegment = async (segment) => {
     // Extraer los campos del fragmento
     const { title, summary, tags, reference, content } =
       extractContent(fragment);
-
     return {
-      title,
-      summary,
       type,
       tags,
+      title,
+      summary,
       reference,
       content,
     };
