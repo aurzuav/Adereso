@@ -1,8 +1,9 @@
 import { generateFragment } from './gptAPI.js';
 import { identifyType } from './gptAPI.js';
-import {extractContent} from './extractResponseContent.js';
+import { extractContent } from './extractResponseContent.js';
 
 export const processSegment = async (segment) => {
+  // Definir los prompts para cada tipo de documento
   const promptUsabilidad = `
   Por favor, fragmenta la siguiente documentación de usabilidad en los siguientes campos usando alrededor y máximo 1000 tokens:
   
@@ -64,22 +65,24 @@ export const processSegment = async (segment) => {
   ### Contenido
   [Contenido]
   `;
-  
-  //console.log('Processing segment:', segment);
 
   try {
+    // identificar el tipo de segmento para elegir el prompt correcto
     const type = await identifyType(segment.text);
     if (type === 'Usabilidad') {
       var prompt = promptUsabilidad;
-    } else if(type === 'API') {
+    } else if (type === 'API') {
       var prompt = promptAPI;
+    } else {
+      throw new Error('No se pudo identificar el tipo de segmento');
     }
+    
+    // Generar el fragmento con el prompt correspondiente
     const fragment = await generateFragment(prompt);
 
     // Extraer los campos del fragmento
-    
     const { title, summary, tags, reference, content } = extractContent(fragment);
-    //console.log('Processed segment:', { title, summary, tags, reference, content });
+
     return {
       title,
       summary,

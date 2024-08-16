@@ -6,9 +6,10 @@ import { URL } from 'url';
 import { processSegment } from './utils/fragmenter.js';
 import { checkIfRelated } from './utils/checkIfRelated.js';
 
+// Cargar variables de entorno
 dotenv.config();
 
-// Ruta a archivo JSONL
+// Ruta a archivo JSONL de input
 const filePath = new URL('../src/data/adereso_cda.jsonl', import.meta.url).pathname;
 
 
@@ -17,13 +18,14 @@ const filePath = new URL('../src/data/adereso_cda.jsonl', import.meta.url).pathn
       fs.unlinkSync('./src/logs/type.txt');
     }
 
-      // Delete the file if it already exists
-      if (fs.existsSync('./src/logs/type.txt')) {
-        fs.unlinkSync('./src/logs/type.txt');
-      }
-
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Middleware para loggear las peticiones
+app.use((req, res, next) => {
+  console.log(`Request: ${req.method} ${req.path}`);
+  next();
+});
 
 app.use(express.json());
 
@@ -32,12 +34,14 @@ app.get('/process', async (req, res) => {
   const segments = [];
   const promises = [];
 
+ 
   const rl = readline.createInterface({
     input: fs.createReadStream(filePath),
     output: process.stdout,
     terminal: false,
   });
 
+   // Lee linea por linea
   rl.on('line', (line) => {
     const segment = JSON.parse(line);
     if (segment.type === 'article') {
@@ -49,13 +53,11 @@ app.get('/process', async (req, res) => {
     }
   });
 
-
-
   rl.on('close', async () => {
     // Esperar a que todas las promesas se resuelvan
     await Promise.all(promises);
     
-    // Paso adicional: Identificar fragmentos relacionados
+    // Identificar fragmentos relacionados mediante los tags
     segments.forEach((fragment, index) => {
       fragment.relatedFragments = [];
       segments.forEach((otherFragment, otherIndex) => {
@@ -68,10 +70,8 @@ app.get('/process', async (req, res) => {
       });
     });
 
-
-
+    // Escribir los fragmentos procesados en un archivo JSONL
     const outputPath = './src/data/processed_fragments.jsonl';
-    console.log(segments);
     fs.writeFileSync(outputPath, segments.map(item => JSON.stringify(item)).join('\n'));
     res.send('Processing complete');
   });
