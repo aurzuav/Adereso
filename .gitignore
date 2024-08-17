@@ -1,4 +1,4 @@
 node_modules/
 .env
-./src/logs/usage_logs.txt
+*usage_logs.txt
 *.DS_Store
