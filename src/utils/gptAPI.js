@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import fs from "fs";
+import axios from 'axios';
 
 export const generateFragment = async (prompt) => {
   try {

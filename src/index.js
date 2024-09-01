@@ -4,7 +4,7 @@ import fs from "fs";
 import readline from "readline";
 import { URL } from "url";
 import { processSegment } from "./utils/fragmenter.js";
-import { checkIfRelated } from "./utils/checkIfRelated.js";
+import { checkIfRelated, calculateClusters } from "./utils/checkIfRelated.js";
 
 // Cargar variables de entorno
 dotenv.config();
@@ -53,6 +53,8 @@ app.get("/process", async (req, res, next) => {
       terminal: false,
     });
 
+    let idCounter = 0; // Contador para IDs únicos
+
     // Lee linea por linea
     rl.on("line", (line) => {
       try {
@@ -60,7 +62,7 @@ app.get("/process", async (req, res, next) => {
 
         if (segment.type === "article") {
           // Almacenar cada promesa de procesamiento en un array
-          const processingPromise = processSegment(segment).then(
+          const processingPromise = processSegment(segment, idCounter++).then(
             (processedSegment) => {
               segments.push(processedSegment);
             },
@@ -77,17 +79,24 @@ app.get("/process", async (req, res, next) => {
         // Esperar a que todas las promesas se resuelvan
         await Promise.all(promises);
 
-        // Identificar fragmentos relacionados mediante los tags
+        const clusters = await calculateClusters(segments);
+        console.log("Clusters:", clusters);
+
+
+
+        // Identificar fragmentos relacionados
         segments.forEach((fragment, index) => {
           fragment.relatedFragments = [];
           segments.forEach((otherFragment, otherIndex) => {
             if (index !== otherIndex) {
-              const areRelated = checkIfRelated(fragment, otherFragment);
+              const areRelated = checkIfRelated(fragment, otherFragment, clusters);
               if (areRelated) {
                 fragment.relatedFragments.push({ title: otherFragment.title });
               }
             }
           });
+          // Añadir la cantidad de títulos relacionados al fragmento
+          fragment.relatedCount = fragment.relatedFragments.length;
         });
 
         // Escribir los fragmentos procesados en un archivo JSONL
@@ -100,6 +109,7 @@ app.get("/process", async (req, res, next) => {
           message:
             "Processing complete, check ./src/data/processed_fragments.jsonl",
         });
+        console.log("Processing complete");
       } catch (error) {
         next(error); // Maneja errores en la finalización del procesamiento
       }

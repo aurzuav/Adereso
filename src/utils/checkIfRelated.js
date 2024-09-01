@@ -1,19 +1,38 @@
-// Función para verificar si dos fragmentos están relacionados
+import { spawn } from 'child_process';
 
-export const checkIfRelated = (fragment1, fragment2) => {
-  // Convertir el string de tags en un array, separando por comas o cualquier otro delimitador que estés usando
-  const tags1 = fragment1.tags
-    .split(",")
-    .map((tag) => tag.trim())
-    .filter((tag) => tag);
-  const tags2 = fragment2.tags
-    .split(",")
-    .map((tag) => tag.trim())
-    .filter((tag) => tag);
 
-  // Filtrar los tags comunes entre ambos fragmentos
-  const commonTags = tags1.filter((tag) => tags2.includes(tag));
+// Función para calcular los clusters una vez
+export function calculateClusters(allFragments) {
+  return new Promise((resolve, reject) => {
+    const fragments = JSON.stringify(allFragments);
 
-  // Considerar relacionados si comparten al menos un tag
-  return commonTags.length > 0;
-};
+    const pythonProcess = spawn('python3', ['./src/utils/kmeans.py', fragments]);
+
+    pythonProcess.stdout.on('data', (data) => {
+      const clusters = JSON.parse(data.toString());
+      resolve(clusters);
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+      console.error('Error in Python process:', data.toString());
+      reject(data.toString());
+    });
+
+    pythonProcess.on('exit', (code) => {
+      console.log(`Python process exited with code ${code}`);
+    });
+  });
+}
+
+// Función para verificar si dos fragmentos están relacionados usando los clusters
+export function checkIfRelated(fragment, otherFragment, clusters) {
+
+
+
+  const cluster1 = clusters[fragment.id];
+  const cluster2 = clusters[otherFragment.id];
+
+  //console.log(fragment.id ,cluster1, otherFragment.id, cluster2)
+  return cluster1 === cluster2;
+
+}
