@@ -2,14 +2,14 @@ import { generateFragment } from "./gptAPI.js";
 import { identifyType } from "./gptAPI.js";
 import { extractContent } from "./extractResponseContent.js";
 
-export const processSegment = async (segment) => {
+export const processSegment = async (segment, id) => {
   // Definir los prompts para cada tipo de documento
   const promptUsabilidad = `
   Por favor, fragmenta la siguiente documentación de usabilidad en los siguientes campos usando alrededor y máximo 1000 tokens:
   
   1. **Título**: Proporciona un título descriptivo para el documento.
   2. **Resumen**: Resume el documento en 2-3 oraciones.
-  3. **Tags**: Lista 3-5 palabras clave relacionadas con el documento.
+  3. **Tags**: Lista 3-5 palabras clave relacionadas con el documento de la forma "tag 1, tag 2, tag 3, etc".
   4. **Referencia**: Proporciona el enlace a la referencia original.
   5. **Contenido**: Detalla los puntos clave del documento, divididos en secciones numeradas.
   
@@ -40,7 +40,7 @@ export const processSegment = async (segment) => {
   
   1. **Título**: Proporciona un título descriptivo para el documento.
   2. **Resumen**: Resume el documento en 2-3 oraciones.
-  3. **Tags**: Lista 3-5 palabras clave relacionadas con el documento.
+  3. **Tags**: Lista 3-5 palabras clave relacionadas con el documento "tag 1, tag 2, tag 3, etc".
   4. **Referencia**: Proporciona el enlace a la referencia original.
   5. **Contenido**: Detalla los puntos clave del documento, divididos en secciones numeradas.
   
@@ -87,6 +87,7 @@ export const processSegment = async (segment) => {
     const { title, summary, tags, reference, content } =
       extractContent(fragment);
     return {
+      id,
       type,
       tags,
       title,

@@ -1,19 +1,50 @@
-// Función para verificar si dos fragmentos están relacionados
+import { spawn } from 'child_process';
+import zlib from 'zlib';
 
-export const checkIfRelated = (fragment1, fragment2) => {
-  // Convertir el string de tags en un array, separando por comas o cualquier otro delimitador que estés usando
-  const tags1 = fragment1.tags
-    .split(",")
-    .map((tag) => tag.trim())
-    .filter((tag) => tag);
-  const tags2 = fragment2.tags
-    .split(",")
-    .map((tag) => tag.trim())
-    .filter((tag) => tag);
+// Función para calcular los clusters y cosine similarities de los fragmentos
+export function findSimilatrities(allFragments) {
+  return new Promise((resolve, reject) => {
+    const fragments = JSON.stringify(allFragments);
+    const pythonProcess = spawn('python3', ['./src/utils/kmeans.py', fragments]);
 
-  // Filtrar los tags comunes entre ambos fragmentos
-  const commonTags = tags1.filter((tag) => tags2.includes(tag));
+    pythonProcess.stdout.on('data', (data) => {
+      try {
+        const clustersAndSimilarities = JSON.parse(zlib.unzipSync(Buffer.from(data, 'latin1')).toString());
+        if (clustersAndSimilarities.error) {
+          reject(new Error(clustersAndSimilarities.error));
+        } else {
+          resolve(clustersAndSimilarities);
+        }
+      } catch (error) {
+        reject(new Error('Failed to process Python output: ' + error.message));
+      }
+    });
 
-  // Considerar relacionados si comparten al menos un tag
-  return commonTags.length > 0;
-};
+    pythonProcess.stderr.on('data', (data) => {
+      console.error('Error in Python process:', data.toString());
+      reject(new Error('Python process error: ' + data.toString()));
+    });
+
+    pythonProcess.on('exit', (code) => {
+      if (code !== 0) {
+        reject(new Error(`Python process exited with non-zero code ${code}`));
+      }
+    });
+  });
+}
+
+// Función para verificar si dos fragmentos están relacionados usando los clusters
+export function checkIfRelated(fragment, otherFragment, clusters) {
+  const fragmentCluster = clusters[fragment.id];
+  const otherFragmentCluster = clusters[otherFragment.id];
+
+    // Verificar si ambos fragmentos están en el mismo clúster
+    if (fragmentCluster && otherFragmentCluster && fragmentCluster.cluster === otherFragmentCluster.cluster) {
+      // Verificar si tienen una similitud por coseno significativa
+      const similarity = fragmentCluster.cosine_similarities[otherFragment.id] || 0;
+      return similarity > 0; // Aquí puedes ajustar el umbral según tu necesidad
+    }
+  
+    return false;
+  }
+
