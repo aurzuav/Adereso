@@ -31,6 +31,12 @@ Para modo development
 yarn dev
 ```
 
+Además se debe tener python instalado con las siguientes dependencias 
+
+```
+pip install scikit-learn
+```
+
 # Modo de uso
 
 Para procesar un archivo JSONL con múltiples segmentos primero se debe cargar un archivo "segments.jsonl" dentro del directorio "./src/data/" y correr la aplicación.
@@ -49,9 +55,13 @@ Posteriormente, se retorna la respuesta y se extrae el contenido type, tags, tit
 
 La función processSegment retorna el segmento fragmentado y se almacena en una lista de segmentos procesados y una lista de promesas.
 
-Al cerrar el archivo de lectura, se espera a que todas las promesas se cumplan y se determina qué segmentos estan relacionados con otros (si comparten tags) con la funcion checkIfRelated.
+Al cerrar el archivo de lectura, se espera a que todas las promesas se cumplan y se determina qué segmentos estan relacionados con otros con la funcion findSimilarities.
 
-Si se determina que dos títulos tienen relación, se agrega a relatedFragments para cada titulo.
+Esta función, llama a un archivo python kmeans.py que hace clustering del contenido de los fragmentos y tambien calcula la similaridad entre estas con la funcion cosine_similarity. Para mejores resultados, se eliminan todos los "stop words" del lenguaje español.
+
+Con estos resultados, luego se compara cada fragmento con los otros, para ver si estan en el mismo cluster y cumplen el criterio de similitud. 
+
+Una vez se determina que dos títulos tienen relación, se agrega a relatedFragments para cada titulo.
 
 Finalizando, se escribe en el archivo "./src/data/processed_fragments.jsonl" todos los segmentos fragmentados con:
 
