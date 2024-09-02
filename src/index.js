@@ -4,7 +4,7 @@ import fs from "fs";
 import readline from "readline";
 import { URL } from "url";
 import { processSegment } from "./utils/fragmenter.js";
-import { checkIfRelated, calculateClusters } from "./utils/checkIfRelated.js";
+import { checkIfRelated, findSimilatrities } from "./utils/checkIfRelated.js";
 
 // Cargar variables de entorno
 dotenv.config();
@@ -79,17 +79,14 @@ app.get("/process", async (req, res, next) => {
         // Esperar a que todas las promesas se resuelvan
         await Promise.all(promises);
 
-        const clusters = await calculateClusters(segments);
-        console.log("Clusters:", clusters);
-
-
+        const similatrities = await findSimilatrities(segments);
 
         // Identificar fragmentos relacionados
         segments.forEach((fragment, index) => {
           fragment.relatedFragments = [];
           segments.forEach((otherFragment, otherIndex) => {
             if (index !== otherIndex) {
-              const areRelated = checkIfRelated(fragment, otherFragment, clusters);
+              const areRelated = checkIfRelated(fragment, otherFragment, similatrities);
               if (areRelated) {
                 fragment.relatedFragments.push({ title: otherFragment.title });
               }

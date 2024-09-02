@@ -1,9 +1,17 @@
 # kmeans.py
 import sys
 import json
-import math
+import zlib
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
+from sklearn.metrics.pairwise import cosine_similarity
+
+# Umbral minimo de similitud
+SIMILARITY_THRESHOLD = 0.2
+
+# Número de clústeres
+num_clusters = 12
+
 
 def main():
     # Leer los argumentos que vienen de Node.js
@@ -11,39 +19,41 @@ def main():
 
     # Cargar el archivo JSON con las stop words
     with open('./src/extras/stopwords-es.json', 'r', encoding='utf-8') as f:
-        stop_words = json.load(f)  # Esto te dará una lista directamente
-
-    # print(fragments)
+        stop_words = json.load(f) 
 
     contents = [fragment['content'] for fragment in fragments]
     vectorizer = TfidfVectorizer(stop_words=stop_words)  
 
     X = vectorizer.fit_transform(contents)
 
-    # # Extraer el contenido de los fragmentos para convertirlo en vectores
-    # contents = [fragment['content'] for fragment in fragments]
+    # Calcular similitud coseno entre los vectores TF-IDF
+    cosine_similarities = cosine_similarity(X)
 
-    # # Convertir textos en vectores TF-IDF
-    # vectorizer = TfidfVectorizer()
-    # X = vectorizer.fit_transform(contents)
-
-    # Ejecutar K-means
-    # print("Ejecutando K-means...")
-    k = 12
-    
-
-    model = KMeans(n_clusters=k)
+    model = KMeans(n_clusters=num_clusters)
     model.fit(X)
 
-    # Devolver los resultados (clusters y centroides)
+    # Crear el diccionario con id como llave y agregar clúster y similitud coseno
+    result = {}
     clusters = model.labels_.tolist()
-       
-    # Crear el diccionario con id como llave y cluster como valor
-    result = {fragment['id']: clusters[i] for i, fragment in enumerate(fragments)}
 
+    for i, fragment in enumerate(fragments):
+        fragment_id = fragment['id']
+        similar_fragments = {}
+
+        for j in range(len(fragments)):
+            if i != j and cosine_similarities[i, j] > SIMILARITY_THRESHOLD:
+                similar_fragments[fragments[j]['id']] = cosine_similarities[i, j]
+
+        # Solo incluir en el resultado si hay similitudes mayores al umbral
+        if similar_fragments:
+            result[fragment_id] = {
+                'cluster': clusters[i],
+                'cosine_similarities': similar_fragments
+            }
     # Retornar el resultado como un JSON string
     try:
-       print(json.dumps(result))
+       compressed_result = zlib.compress(json.dumps(result).encode('utf-8'))
+       sys.stdout.buffer.write(compressed_result)  # Envía el buffer comprimido a Node.js
     except Exception as e:
         print(json.dumps({"error": str(e)}))
 
